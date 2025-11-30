@@ -13,12 +13,12 @@ export const ChessGame = () => {
   const [isPlaying, setIsPlaying] = useState(false);
   const [messages, setMessages] = useState([]);
   const [color, setColor] = useState(null);
-  // const [message,setMessage]=useState("");
-  // const [openmsg,setOpenmsg]=useState(false);
+  const [message, setMessage] = useState("");
+  const [openmsg, setOpenmsg] = useState(false);
 
-  useEffect(()=>{
-    console.log(isPlaying)
-  },[isPlaying])
+  useEffect(() => {
+    console.log(isPlaying);
+  }, [isPlaying]);
 
   useEffect(() => {
     const checkLogin = async () => {
@@ -53,8 +53,8 @@ export const ChessGame = () => {
     });
 
     socket.current.on("getMove", ({ sourceSquare, targetSquare }) => {
-        onOppDrop(sourceSquare,targetSquare)
-        setIsPlaying(true)
+      onOppDrop(sourceSquare, targetSquare);
+      setIsPlaying(true);
     });
 
     socket.current.on("getMessage", (message) => {
@@ -64,8 +64,7 @@ export const ChessGame = () => {
 
   const onDrop = useCallback(
     (sourceSquare, targetSquare) => {
-
-      if(!isPlaying) return false
+      if (!isPlaying) return false;
 
       try {
         const move = game.move({
@@ -81,7 +80,7 @@ export const ChessGame = () => {
             move.san
           }`;
           setMoveLog((prev) => [...prev, moveNotation]);
-          setIsPlaying(false)
+          setIsPlaying(false);
           return true;
         }
       } catch (error) {
@@ -89,11 +88,10 @@ export const ChessGame = () => {
       }
       return false;
     },
-    [game,isPlaying]
+    [game, isPlaying]
   );
-  
-  const onOppDrop = useCallback(
-  (sourceSquare, targetSquare) => {
+
+  const onOppDrop = useCallback((sourceSquare, targetSquare) => {
     try {
       setGame((prevGame) => {
         const updated = new Chess(prevGame.fen());
@@ -116,10 +114,23 @@ export const ChessGame = () => {
     } catch (error) {
       return false;
     }
-  },
-  []
-);
+  }, []);
 
+  const handleSendMessage = () => {
+    if (message.trim() !== "") {
+      // For now, just save the message locally
+      // In a real implementation, you would emit this via socket
+      socket.current.emit('setMessage',message)
+      setMessages((prev) => [...prev, { message: message.trim(), user: "me" }]);
+      setMessage("");
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") {
+      handleSendMessage();
+    }
+  };
 
   const resetGame = () => {
     setGame(new Chess());
@@ -163,6 +174,8 @@ export const ChessGame = () => {
     border: "1px solid #ccc",
     borderRadius: "4px",
     padding: "15px",
+    display: "flex",
+    flexDirection: "column",
   };
 
   const parentStyle = {
@@ -171,16 +184,94 @@ export const ChessGame = () => {
   };
 
   const moveListStyle = {
-    height: "400px",
-    overflowY: "auto",
+    height: "150px",
+    overflowX: "auto",
+    overflowY: "hidden",
     border: "1px solid #eee",
     padding: "10px",
+    display: "flex",
+    flexDirection: "row",
+    flexWrap: "nowrap",
+    gap: "10px",
+    alignItems: "flex-start",
   };
 
   const moveItemStyle = {
-    padding: "8px",
-    borderBottom: "1px solid #eee",
+    padding: "8px 12px",
+    border: "1px solid #ddd",
+    borderRadius: "4px",
     backgroundColor: "#fff",
+    minWidth: "80px",
+    textAlign: "center",
+    flexShrink: 0,
+    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+  };
+
+  // Message section styles
+  const messageSectionStyle = {
+    marginTop: "20px",
+    border: "1px solid #ccc",
+    borderRadius: "4px",
+    padding: "15px",
+    display: "flex",
+    flexDirection: "column",
+    height: "200px",
+  };
+
+  const messageListStyle = {
+    flex: 1,
+    overflowY: "auto",
+    border: "1px solid #eee",
+    padding: "10px",
+    marginBottom: "10px",
+    backgroundColor: "#f9f9f9",
+    borderRadius: "4px",
+  };
+
+  const messageItemStyle = {
+    padding: "8px 12px",
+    marginBottom: "8px",
+    borderRadius: "4px",
+    wordWrap: "break-word",
+  };
+
+  const myMessageStyle = {
+    ...messageItemStyle,
+    backgroundColor: "#2196f3",
+    color: "white",
+    marginLeft: "20px",
+    textAlign: "right",
+  };
+
+  const oppMessageStyle = {
+    ...messageItemStyle,
+    backgroundColor: "#e0e0e0",
+    color: "#333",
+    marginRight: "20px",
+    textAlign: "left",
+  };
+
+  const messageInputContainerStyle = {
+    display: "flex",
+    gap: "10px",
+  };
+
+  const messageInputStyle = {
+    flex: 1,
+    padding: "8px 12px",
+    border: "1px solid #ccc",
+    borderRadius: "4px",
+    fontSize: "14px",
+  };
+
+  const sendButtonStyle = {
+    padding: "8px 16px",
+    backgroundColor: "#2196f3",
+    color: "white",
+    border: "none",
+    borderRadius: "4px",
+    cursor: "pointer",
+    fontSize: "14px",
   };
 
   const buttonStyle = {
@@ -200,23 +291,26 @@ export const ChessGame = () => {
     color: game.in_check() ? "#d32f2f" : "#333",
   };
 
-  //   const maskStyle = {
-  //   position: "absolute",
-  //   inset: 0,
-  //   backgroundColor: "green",  // fully transparent but still blocks clicks
-  //   zIndex: 10,
-  //   opacity:"80%",
-  //   pointerEvents: "auto",             // BLOCKS clicks
-  // };
+  // Auto-scroll to the end when new moves are added
+  const moveListRef = useRef(null);
+  const messageListRef = useRef(null);
+
+  useEffect(() => {
+    if (moveListRef.current) {
+      moveListRef.current.scrollLeft = moveListRef.current.scrollWidth;
+    }
+  }, [moveLog]);
+
+  useEffect(() => {
+    if (messageListRef.current) {
+      messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+    }
+  }, [messages]);
 
   return (
     <div style={containerStyle}>
       <div style={boardContainerStyle}>
         <div style={statusStyle}>{getGameStatus()}</div>
-        {/* <div style={parentStyle}  */}
-        {/* > */}
-        {/* {!isPlaying&&<div style={maskStyle}>
-          </div>} */}
         <Chessboard
           position={game.fen()}
           onPieceDrop={onDrop}
@@ -234,7 +328,6 @@ export const ChessGame = () => {
             transform: color == "B" ? "rotate(180deg)" : "",
           }}
         />
-        {/* </div> */}
         <button
           onClick={() => {
             navigate(0);
@@ -249,7 +342,7 @@ export const ChessGame = () => {
 
       <div style={moveLogStyle}>
         <h2 style={{ marginBottom: "15px", fontSize: "18px" }}>Move History</h2>
-        <div style={moveListStyle}>
+        <div style={moveListStyle} ref={moveListRef}>
           {moveLog.length > 0 ? (
             moveLog.map((move, index) => (
               <div key={index} style={moveItemStyle}>
@@ -262,11 +355,58 @@ export const ChessGame = () => {
                 textAlign: "center",
                 color: "#666",
                 fontStyle: "italic",
+                width: "100%",
               }}
             >
               No moves yet
             </div>
           )}
+        </div>
+
+        {/* Message Section */}
+        <div style={messageSectionStyle}>
+          <h3 style={{ marginBottom: "10px", fontSize: "16px" }}>Chat</h3>
+          <div style={messageListStyle} ref={messageListRef}>
+            {messages.length > 0 ? (
+              messages.map((msg, index) => (
+                <div
+                  key={index}
+                  style={msg.user === "me" ? myMessageStyle : oppMessageStyle}
+                >
+                  {msg.message}
+                </div>
+              ))
+            ) : (
+              <div
+                style={{
+                  textAlign: "center",
+                  color: "#666",
+                  fontStyle: "italic",
+                  padding: "20px",
+                }}
+              >
+                No messages yet. Start a conversation!
+              </div>
+            )}
+          </div>
+          <div style={messageInputContainerStyle}>
+            <input
+              type="text"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Type your message..."
+              style={messageInputStyle}
+            />
+            <button
+              onClick={handleSendMessage}
+              style={sendButtonStyle}
+              onMouseOver={(e) => (e.target.style.backgroundColor = "#1976d2")}
+              onMouseOut={(e) => (e.target.style.backgroundColor = "#2196f3")}
+            >
+              Send
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -9,8 +9,6 @@ import cookieParser from "cookie-parser";
 import Cryptr from "cryptr";
 
 const cryptr = new Cryptr('4f5v9e4v9e9gte94b9');
-
-
 const app = express();
 const server = createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
