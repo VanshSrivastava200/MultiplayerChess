@@ -7,16 +7,18 @@ import axios from "axios";
 
 export const ChessGame = () => {
   let navigate = useNavigate();
+  const [isPaired,setIsPaired]=useState(false)
   const [game, setGame] = useState(new Chess());
   const [moveLog, setMoveLog] = useState([]);
   const socket = useRef(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [opp, setOpp] = useState(null);
   const [messages, setMessages] = useState([]);
   const [color, setColor] = useState(null);
   const [message, setMessage] = useState("");
   const [openmsg, setOpenmsg] = useState(false);
-
-  useEffect(() => {
+  const [currentUser,setCurrentUser]=useState(null)
+  useEffect(() => {``
     console.log(isPlaying);
   }, [isPlaying]);
 
@@ -33,6 +35,9 @@ export const ChessGame = () => {
         if (!result.data.check) {
           navigate("/login");
         }
+        else{
+          setCurrentUser(result.data.user)
+        }
       } catch (error) {
         console.error("Error starting game:", error);
       }
@@ -46,6 +51,8 @@ export const ChessGame = () => {
     });
     socket.current.on("paired", (obj) => {
       setColor(obj.p);
+      setOpp(obj.opp);
+      setIsPaired(true)
       console.log(obj.p);
       if (obj.p === "W") {
         setIsPlaying(true);
@@ -140,12 +147,19 @@ export const ChessGame = () => {
   const getGameStatus = () => {
     if (game.game_over()) {
       if (game.in_checkmate()) {
-        return "Checkmate!";
+        if(game.turn()==='w'&&color==='W'||game.turn()==='b'&&color==='B')
+          return "You Lost";
+        else
+          socket.current.emit("over",{gamestatus:currentUser})
+          console.log(currentUser)
+          return "You Won!"
       }
-      if (game.isDraw()) {
+      if (game.in_draw()) {
+        socket.current.emit("over",{gamestatus:"draw"})
         return "Draw!";
       }
       if (game.in_stalemate()) {
+        socket.current.emit("over",{gamestatus:"draw"})
         return "Stalemate!";
       }
 
@@ -311,6 +325,8 @@ export const ChessGame = () => {
     <div style={containerStyle}>
       <div style={boardContainerStyle}>
         <div style={statusStyle}>{getGameStatus()}</div>
+        <div className="m-2 font-semibold"
+        >{!isPaired?"Searching For Players...":opp}</div>
         <Chessboard
           position={game.fen()}
           onPieceDrop={onDrop}
@@ -328,6 +344,8 @@ export const ChessGame = () => {
             transform: color == "B" ? "rotate(180deg)" : "",
           }}
         />
+        <div className="m-2 font-semibold"
+        >{currentUser}</div>
         <button
           onClick={() => {
             navigate(0);

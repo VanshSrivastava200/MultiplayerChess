@@ -4,11 +4,12 @@ import { createServer } from "node:http";
 import "dotenv/config";
 import mongoose from "mongoose";
 import User from "./models/User.js";
+import Game from "./models/Game.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import Cryptr from "cryptr";
 
-const cryptr = new Cryptr('4f5v9e4v9e9gte94b9');
+const cryptr = new Cryptr("4f5v9e4v9e9gte94b9");
 const app = express();
 const server = createServer(app);
 const io = new Server(server, { cors: { origin: "*" } });
@@ -24,14 +25,14 @@ app.use(
   })
 );
 
-
+var currentuser;
 //login check
 const isLoggedIn = async (req, res, next) => {
   if (req.cookies?.token) {
     try {
-        const username =  cryptr.decrypt(req.cookies.token);
-        console.log("username -> ",username);
-      const isUserExist = await User.findOne({ username });
+      currentuser = cryptr.decrypt(req.cookies.token);
+      console.log("currentuser -> ", currentuser);
+      const isUserExist = await User.findOne({ username: currentuser });
       console.log("vv", isUserExist);
       if (isUserExist) next();
     } catch (error) {
@@ -54,7 +55,6 @@ mongoose
 
 //routes
 
-
 //register
 app.post("/register", async (req, res) => {
   const { name, username, email, password, country } = req.body;
@@ -64,6 +64,7 @@ app.post("/register", async (req, res) => {
     email,
     password,
     country,
+    rating:600,
   });
 
   try {
@@ -105,12 +106,12 @@ app.post("/register", async (req, res) => {
 app.post("/login", (req, res) => {
   const { username, password } = req.body;
   try {
-    User.findOne({ username }).then( (founduser) => {
+    User.findOne({ username }).then((founduser) => {
       if (founduser) {
         if (founduser.password == password) {
           console.log("Session after login:", req.session);
           console.log("logged in successfully");
-          const userhash =  cryptr.encrypt(username);
+          const userhash = cryptr.encrypt(username);
 
           res.cookie("token", userhash, {
             httpOnly: true,
@@ -137,29 +138,51 @@ app.post("/login", (req, res) => {
 
 //startgame
 app.post("/startgame", isLoggedIn, (req, res) => {
-  res.json({ check: true });
+  res.json({ check: true, user: currentuser });
 });
 
-
+app.post('/getdata',async (req,res)=>{
+  let accdetails;
+  let games;
+  const uid=req.body.uid;
+  console.log(uid)
+  try{
+    await User.findOne({username:uid},{password:0,email:0}).then((founduser)=>{
+    accdetails=founduser;
+  })
+  await Game.find({$or:[{username1:uid},{username2:uid}]}).then((foundgames)=>{
+    games=foundgames;
+  })
+  console.log({accdetails,games})
+  res.send({accdetails,games})
+  }catch(err){
+    console.log(err)
+  }
+})
 
 let waitinguser = null;
+let user1;
+let user2;
 //socket connect
 let roomId;
 io.on("connection", (socket) => {
   console.log(`User connected ${socket.id}`);
+  socket.username = currentuser;
   if (!waitinguser) {
     waitinguser = socket;
     socket.emit("waiting", true);
     console.log("Waiting user joined " + socket.id);
     socket.emit("waiting", "Waiting for another user to join");
-  } else {
+  } else if (waitinguser && waitinguser.username != socket.username) {
     roomId = `${waitinguser.id}-${socket.id}`;
     socket.join(roomId);
     socket.emit("waiting", false);
     waitinguser.join(roomId);
-    waitinguser.emit("paired", { roomId, p: "W" });
-    socket.emit("paired", { roomId, p: "B" });
+    waitinguser.emit("paired", { roomId, p: "W", opp: socket.username });
+    socket.emit("paired", { roomId, p: "B", opp: waitinguser.username });
     console.log(`Paired users in ${roomId}`);
+    user1 = waitinguser.username;
+    user2 = socket.username;
     waitinguser = null;
   }
   //disconnet
@@ -175,9 +198,51 @@ io.on("connection", (socket) => {
     socket.to(roomId).emit("getMove", { sourceSquare, targetSquare });
   });
   //message
-  socket.on("setMessage",(message)=>{
-    socket.to(roomId).emit("getMessage",message);
-  })
+  socket.on("setMessage", (message) => {
+    socket.to(roomId).emit("getMessage", message);
+  });
+
+  //savegame
+  socket.on("over", async ({ gamestatus }) => {
+    let num;
+    console.log(gamestatus)
+    if (gamestatus === user1) num = 1;
+    else if (gamestatus === user2) num = 2;
+    else num = 3;
+
+    const newGame = new Game({
+      username1: user1,
+      username2: user2,
+      status: num,
+    });
+
+    try {
+      await newGame.save();
+      console.log("Game saved\n" + newGame);
+    } catch (err) {
+      console.log(err);
+    }
+    try{
+      if(num==1){
+        await User.updateOne(
+        {username:user1},
+        {$inc:{rating:8}})
+        await User.updateOne(
+        {username:user2},
+        {$inc:{rating:-8}})
+      }
+      else if(num==2){
+        await User.updateOne(
+        {username:user1},
+        {$inc:{rating:-8}})
+        await User.updateOne(
+        {username:user2},
+        {$inc:{rating:8}})
+      }
+    }catch(err){
+      console.log(err)
+    }
+  });
 });
 
 server.listen(PORT, () => {

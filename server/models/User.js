@@ -24,6 +24,9 @@ const userSchema = new mongoose.Schema({
     country:{
         type:String,
         required:true
+    },
+    rating:{
+        type:Number
     }
 },{timestamps:true})
 
