@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useState } from "react";
-import { FaChessBoard, FaChessKnight } from "react-icons/fa";
+import { FaChessBoard, FaChessKnight, FaUser } from "react-icons/fa";
 
 export const Home = () => {
   const navigate = useNavigate();
@@ -20,15 +20,19 @@ export const Home = () => {
       );
       if (result.data.check) {
         navigate("/chess");
-      }else{
-        alert("Please Login first")
-        navigate('/login')
+      } else {
+        alert("Please Login first");
+        navigate("/login");
       }
     } catch (error) {
       console.error("Error starting game:", error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const goToProfile = () => {
+    navigate("/account");
   };
 
   return (
@@ -59,7 +63,7 @@ export const Home = () => {
           <button
             onClick={StartGame}
             disabled={isLoading}
-            className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-3"
+            className="w-full bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-4 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-3 mb-4"
           >
             {isLoading ? (
               <>
@@ -72,6 +76,15 @@ export const Home = () => {
                 <span>Start New Game</span>
               </>
             )}
+          </button>
+
+          {/* Profile Button */}
+          <button
+            onClick={goToProfile}
+            className="w-full bg-gradient-to-r from-gray-100 to-gray-200 hover:from-gray-200 hover:to-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2 flex items-center justify-center gap-3 border border-gray-300/50"
+          >
+            <FaUser className="text-gray-600" />
+            <span>View Profile</span>
           </button>
 
           {/* Quick Stats */}

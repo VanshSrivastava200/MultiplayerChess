@@ -151,7 +151,7 @@ export const Account = () => {
           </div>
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             <button 
-              onClick={() => navigate("/startgame")}
+              onClick={() => navigate("/chess")}
               className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg flex items-center justify-center gap-2"
             >
               <FaChessBoard className="text-lg" />

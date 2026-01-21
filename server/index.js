@@ -8,6 +8,7 @@ import Game from "./models/Game.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import Cryptr from "cryptr";
+import { useState } from "react";
 
 const cryptr = new Cryptr("4f5v9e4v9e9gte94b9");
 const app = express();
@@ -157,6 +158,23 @@ app.post('/getdata',async (req,res)=>{
   res.send({accdetails,games})
   }catch(err){
     console.log(err)
+  }
+})
+
+app.post('/getrating',async(req,res)=>{
+  const id = req.body.id;
+  try{
+    User.findOne({username:id}).then((founduser)=>{
+      if(founduser){
+        res.json({rating:founduser.rating})
+        console.log(founduser.rating)
+      }
+      else{
+        console.log("user does not exist")
+      }
+    })
+  }catch(error){
+    console.log("Failed to fetch rating");
   }
 })
 
