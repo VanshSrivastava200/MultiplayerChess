@@ -22,7 +22,7 @@ export const Register = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try{
-        const result = await axios.post('http://localhost:3000/register',formData,{withCredentials: true});
+        const result = await axios.post('https://multiplayerchess-cl7y.onrender.com/register',formData,{withCredentials: true});
         console.log(result.data.message);
         if(result.data.check){
           alert(result.data.message);

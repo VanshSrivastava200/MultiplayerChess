@@ -27,7 +27,7 @@ export const ChessGame = () => {
     const checkLogin = async () => {
       try {
         const result = await axios.post(
-          "http://localhost:3000/startgame",
+          "https://multiplayerchess-cl7y.onrender.com/startgame",
           {},
           { withCredentials: true }
         );
@@ -89,7 +89,7 @@ export const ChessGame = () => {
   const getRating = async (id) => {
     try {
       const response = await axios.post(
-        "http://localhost:3000/getrating",
+        "https://multiplayerchess-cl7y.onrender.com/getrating",
         { id },
         { withCredentials: true }
       );

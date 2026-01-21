@@ -24,7 +24,7 @@ export const Login = () => {
     e.preventDefault();
 
     try {
-      const result = await axios.post('http://localhost:3000/login', lformData,{
+      const result = await axios.post('https://multiplayerchess-cl7y.onrender.com/login', lformData,{
   withCredentials: true});
       console.log(result);
       if(result.data.check){

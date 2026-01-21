@@ -35,7 +35,7 @@ export const Account = () => {
     const checkLogin = async () => {
       try {
         const result = await axios.post(
-          "http://localhost:3000/startgame",
+          "https://multiplayerchess-cl7y.onrender.com/startgame",
           {},
           { withCredentials: true }
         );
@@ -56,7 +56,7 @@ export const Account = () => {
 
   const getData = async (curus) => {
     try {
-      const userData = await axios.post("http://localhost:3000/getdata", {
+      const userData = await axios.post("https://multiplayerchess-cl7y.onrender.com/getdata", {
         uid: curus
       });
       setGames(userData.data.games.reverse());

@@ -8,7 +8,6 @@ import Game from "./models/Game.js";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import Cryptr from "cryptr";
-import { useState } from "react";
 
 const cryptr = new Cryptr("4f5v9e4v9e9gte94b9");
 const app = express();
@@ -116,8 +115,8 @@ app.post("/login", (req, res) => {
 
           res.cookie("token", userhash, {
             httpOnly: true,
-            secure: false, // set true when using HTTPS
-            sameSite: "strict",
+            secure: true, // set true when using HTTPS
+            sameSite: "none",
             maxAge: 24 * 60 * 60 * 1000, // 1 day
           });
 

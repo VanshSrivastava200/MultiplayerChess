@@ -12,7 +12,7 @@ export const Home = () => {
     setIsLoading(true);
     try {
       const result = await axios.post(
-        "http://localhost:3000/startgame",
+        "https://multiplayerchess-cl7y.onrender.com/startgame",
         {},
         {
           withCredentials: true,
