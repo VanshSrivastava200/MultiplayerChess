@@ -36,35 +36,11 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(
   cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-      
-      const allowedOrigins = ["https://vchessplay.netlify.app", "http://localhost:3000"];
-      
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
+    origin: ["https://vchessplay.netlify.app", "http://localhost:3000"],
     credentials: true,
   })
 );
 
-app.options("*", cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
-    
-    const allowedOrigins = ["https://vchessplay.netlify.app", "http://localhost:3000"];
-    
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-}));
 var currentuser;
 //login check
 const isLoggedIn = async (req, res, next) => {
@@ -93,9 +69,6 @@ mongoose
     console.log("Unable to connect to db");
   });
 
-//routes
-
-//register
 app.post("/register", async (req, res) => {
   const { name, username, email, password, country } = req.body;
   const newUser = new User({
