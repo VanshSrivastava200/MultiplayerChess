@@ -14,43 +14,35 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, { 
   cors: { 
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-      
-      const allowedOrigins = ["https://vchessplay.netlify.app", "http://localhost:3000"];
-      
-      if (allowedOrigins.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    credentials: true 
+    origin: ["https://vchessplay.netlify.app", "http://localhost:3000"],
+    credentials: true,
+    methods: ["GET", "POST"]
   } 
 });
-
 const PORT = process.env.PORT;
 app.use(cookieParser());
 
-//moddleware
+//middleware
 app.use(express.json());
 app.use(
   cors({
-    origin: ["https://vchessplay.netlify.app", "http://localhost:3000"],
+    origin: ["https://vchessplay.netlify.app","http://localhost:3000"],
     credentials: true,
   })
 );
 
-var currentuser;
 //login check
 const isLoggedIn = async (req, res, next) => {
   if (req.cookies?.token) {
     try {
-      currentuser = cryptr.decrypt(req.cookies.token);
+      const currentuser = cryptr.decrypt(req.cookies.token);
       console.log("currentuser -> ", currentuser);
       const isUserExist = await User.findOne({ username: currentuser });
       console.log("vv", isUserExist);
-      if (isUserExist) next();
+      if (isUserExist) {
+        req.currentuser = currentuser;
+        next();
+      }
     } catch (error) {
       console.log("Invalid token", error);
       res.json("Invalid token");
@@ -69,6 +61,9 @@ mongoose
     console.log("Unable to connect to db");
   });
 
+//routes
+
+//register
 app.post("/register", async (req, res) => {
   const { name, username, email, password, country } = req.body;
   const newUser = new User({
@@ -122,15 +117,14 @@ app.post("/login", (req, res) => {
     User.findOne({ username }).then((founduser) => {
       if (founduser) {
         if (founduser.password == password) {
-          console.log("Session after login:", req.session);
           console.log("logged in successfully");
           const userhash = cryptr.encrypt(username);
 
           res.cookie("token", userhash, {
             httpOnly: true,
-            secure: true, // set true when using HTTPS
+            secure: true,
             sameSite: "none",
-            maxAge: 24 * 60 * 60 * 1000, // 1 day
+            maxAge: 24 * 60 * 60 * 1000,
           });
 
           res.json({ check: true, message: "Logged in successfully" });
@@ -151,7 +145,7 @@ app.post("/login", (req, res) => {
 
 //startgame
 app.post("/startgame", isLoggedIn, (req, res) => {
-  res.json({ check: true, user: currentuser });
+  res.json({ check: true, user: req.currentuser });
 });
 
 app.post('/getdata',async (req,res)=>{
@@ -197,7 +191,21 @@ let user2;
 let roomId;
 io.on("connection", (socket) => {
   console.log(`User connected ${socket.id}`);
-  socket.username = currentuser;
+  
+  // Extract username from cookies
+  const cookies = socket.handshake.headers.cookie;
+  if (cookies) {
+    const tokenMatch = cookies.match(/token=([^;]+)/);
+    if (tokenMatch) {
+      try {
+        socket.username = cryptr.decrypt(tokenMatch[1]);
+        console.log(`Socket username: ${socket.username}`);
+      } catch (err) {
+        console.log("Failed to decrypt socket token");
+      }
+    }
+  }
+  
   if (!waitinguser) {
     waitinguser = socket;
     socket.emit("waiting", true);

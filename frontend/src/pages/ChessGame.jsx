@@ -52,6 +52,11 @@ export const ChessGame = () => {
     socket.current = connectWS();
     socket.current.on("connect", () => {
       console.log("user connected");
+      console.log("Socket connected with ID:", socket.current.id);
+    });
+
+    socket.current.on("connect_error", (error) => {
+      console.error("Socket connection error:", error);
     });
     
     socket.current.on("paired", async (obj) => {
