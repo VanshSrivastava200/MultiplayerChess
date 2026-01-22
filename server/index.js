@@ -14,10 +14,21 @@ const app = express();
 const server = createServer(app);
 const io = new Server(server, { 
   cors: { 
-    origin: ["https://vchessplay.netlify.app", "http://localhost:3000"],
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      
+      const allowedOrigins = ["https://vchessplay.netlify.app", "http://localhost:3000"];
+      
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true 
   } 
 });
+
 const PORT = process.env.PORT;
 app.use(cookieParser());
 
@@ -25,11 +36,35 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(
   cors({
-    origin: ["https://vchessplay.netlify.app","http://localhost:3000"],
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true);
+      
+      const allowedOrigins = ["https://vchessplay.netlify.app", "http://localhost:3000"];
+      
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   })
 );
 
+app.options("*", cors({
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+    
+    const allowedOrigins = ["https://vchessplay.netlify.app", "http://localhost:3000"];
+    
+    if (allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
 var currentuser;
 //login check
 const isLoggedIn = async (req, res, next) => {
