@@ -12,7 +12,12 @@ import Cryptr from "cryptr";
 const cryptr = new Cryptr("4f5v9e4v9e9gte94b9");
 const app = express();
 const server = createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+const io = new Server(server, { 
+  cors: { 
+    origin: ["https://vchessplay.netlify.app", "http://localhost:3000"],
+    credentials: true 
+  } 
+});
 const PORT = process.env.PORT;
 app.use(cookieParser());
 
@@ -20,7 +25,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(
   cors({
-    origin: ["https://vchessplay.netlify.app/","http://localhost:3000"],
+    origin: ["https://vchessplay.netlify.app","http://localhost:3000"],
     credentials: true,
   })
 );
